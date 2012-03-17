@@ -15,7 +15,7 @@ Index all episodes in all shows
 $ python main.py episodes
 
 If you are only interested in a single show (for example Security Now) you can use the following command
-$ python main.py show Security Now
+$ python main.py show "Security Now"
 
 Dependencies:
 bs4 - http://www.crummy.com/software/BeautifulSoup/

@@ -124,7 +124,7 @@ class TwitParser:
         # insert the show
         c.execute('''INSERT INTO shows(uri, title, image) VALUES(?, ?, ?)''', (show.uri, show.title, show.image))
       else:
-        c.execute('''UPDATE shows SET image = ?, WHERE id = ?''', (show.image, show_row['id']))
+        c.execute('''UPDATE shows SET image = ? WHERE id = ?''', (show.image, show_row['id']))
     self.db.commit()
     c.close()
   

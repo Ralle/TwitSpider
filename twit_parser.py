@@ -312,7 +312,7 @@ class TwitParser:
       title = show.title + " Backlog",
       link = 'http://' + self.host + show.uri,
       description = show.description,
-      image = PyRSS2Gen.Image(url = show.image, title = '', link = 'http://' + self.host + show.uri),
+      image = PyRSS2Gen.Image(url = show.image_big, title = '', link = 'http://' + self.host + show.uri),
       lastBuildDate = datetime.datetime.utcnow(),
       items = items
     )

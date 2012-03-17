@@ -1,5 +1,6 @@
 Description:
 A Python scraper for Leo Laporte's online podcast / netcast network. It indexes shows and their episodes and can generate RSS feeds from them.
+It takes quite a while to index all episodes as there are more than 4000. So I reommend indexing a single show instead or just let it run overnight.
 
 Reason:
 So I can listen to the Security Now backlog without needing to manually download each episode. This allows you to subscribe in iTunes to the RSS file you generate if you host it on any HTTP server (I use my Public Dropbox folder).

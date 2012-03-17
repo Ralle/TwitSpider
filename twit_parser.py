@@ -80,16 +80,20 @@ class TwitParser:
     else:
       last_page = last_page['href']
       last_page = last_page[ last_page.rfind('=')+1 :]
+    # get description of the show
+    description = unicode(soup.select('[class~=views-field-field-description-value] p')[0])
+    
     return {
       'episodes': episodes,
-      'lastpage': last_page
+      'lastpage': last_page,
+      'description': description
     }
   
   def crawl_episode(self, episode):
     data = self.fetch_page(episode.uri)
     soup = BeautifulSoup(data, 'html5lib').select('#content-last')[0]
     episode = EpisodeResult()
-    episode.description = str(soup.select('[class~=views-field-field-summary-value]')[0])
+    episode.description = unicode(soup.select('[class~=views-field-field-summary-value]')[0])
     links = soup.select('ul[class=download-list]')[0].find_all('li')
     episode.hd_video_url = None
     episode.sd_video_url = None
@@ -133,6 +137,10 @@ class TwitParser:
     while not done:
       print "Page", page
       data = self.crawl_show_page(url, page)
+      # set show description
+      if show.description != data['description'] and page == 0:
+        c.execute('UPDATE shows SET description=? WHERE id=?', (data['description'], show.id))
+        show.description = data['description']
       # loop through episodes to insert and detect if we have seen them before
       for episode in data['episodes']:
         if last == None or episode.uri != last['uri']:
@@ -296,7 +304,7 @@ class TwitParser:
     rss = PyRSS2Gen.RSS2(
       title = show.title + " Backlog",
       link = 'http://' + self.host + show.uri,
-      description = 'Backlog of the podcast ' + show.title,
+      description = show.description,
       lastBuildDate = datetime.datetime.utcnow(),
       items = items
     )

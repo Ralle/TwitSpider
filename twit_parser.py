@@ -82,11 +82,14 @@ class TwitParser:
       last_page = last_page[ last_page.rfind('=')+1 :]
     # get description of the show
     description = unicode(soup.select('[class~=views-field-field-description-value] p')[0])
-    
+    # get big image
+    img = soup.select('[class~=views-field-field-cover-art-fid] img')[0]
+    image = img['src']
     return {
       'episodes': episodes,
       'lastpage': last_page,
-      'description': description
+      'description': description,
+      'image': image,
     }
   
   def crawl_episode(self, episode):
@@ -116,9 +119,12 @@ class TwitParser:
     shows = self.crawl_shows()
     for show in shows:
       c.execute('''SELECT * FROM shows WHERE title = ?''', (show.title,))
-      if c.fetchone() == None:
+      show_row = c.fetchone()
+      if show_row == None:
         # insert the show
         c.execute('''INSERT INTO shows(uri, title, image) VALUES(?, ?, ?)''', (show.uri, show.title, show.image))
+      else:
+        c.execute('''UPDATE shows SET image = ?, WHERE id = ?''', (show.image, show_row['id']))
     self.db.commit()
     c.close()
   
@@ -138,9 +144,10 @@ class TwitParser:
       print "Page", page
       data = self.crawl_show_page(url, page)
       # set show description
-      if show.description != data['description'] and page == 0:
-        c.execute('UPDATE shows SET description=? WHERE id=?', (data['description'], show.id))
-        show.description = data['description']
+      # if show.description != data['description'] and page == 0:
+      c.execute('UPDATE shows SET description=?, image_big=? WHERE id=?', (data['description'], data['image'], show.id))
+      show.description = data['description']
+      show.image_big = data['image']
       # loop through episodes to insert and detect if we have seen them before
       for episode in data['episodes']:
         if last == None or episode.uri != last['uri']:
@@ -266,6 +273,7 @@ class TwitParser:
         uri TEXT,
         title TEXT,
         image TEXT,
+        image_big TEXT,
         description TEXT
       )''')
     if not self.table_exists('episodes'):
@@ -283,7 +291,6 @@ class TwitParser:
         audio_url TEXT,
         FOREIGN KEY (show) REFERENCES show(id) ON DELETE CASCADE
       )''')
-    # c.execute('''ALTER TABLE shows ADD description TEXT''')
     # Save (commit) the changes
     self.db.commit()
     # We can also close the cursor if we are done with it
@@ -305,6 +312,7 @@ class TwitParser:
       title = show.title + " Backlog",
       link = 'http://' + self.host + show.uri,
       description = show.description,
+      image = PyRSS2Gen.Image(url = show.image, title = '', link = 'http://' + self.host + show.uri),
       lastBuildDate = datetime.datetime.utcnow(),
       items = items
     )
@@ -327,6 +335,7 @@ class Show:
     self.title = row['title']
     self.uri = row['uri']
     self.image = row['image']
+    self.image_big = row['image_big']
     self.id = row['id']
     self.description = row['description']
   def __str__(self):
